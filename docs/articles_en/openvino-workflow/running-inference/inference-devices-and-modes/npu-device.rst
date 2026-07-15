@@ -170,6 +170,8 @@ The NPU device is currently supported by AUTO inference modes
          ov::range_for_streams
          ov::num_streams
          ov::execution_devices
+         ov::runtime_requirements
+         ov::compatibility_check
          ov::device::architecture
          ov::device::capabilities
          ov::device::full_name
@@ -325,8 +327,8 @@ Can be used for both model caching and user requested export or import of compil
 
 .. note::
 
-   If user compiles a model using ``Compiler-In-Driver``, currently there is no secure compilation available in driver until ``32.0.100.4724`` (inclusively) and a warning
-   describing this potential security flaw will be issued if encryption callbacks were set.
+   If user compiles a model using ``Compiler-In-Driver``, currently there is no secure compilation available in driver until ``32.0.100.4724`` (inclusively) and an exception will be thrown
+   for older drivers during compilation if encryption callbacks were set.
 
 Usage example:
 
@@ -377,6 +379,32 @@ or
    }, nullptr}));
 
    compiled_model.export_model(custom_encrypted_blob_stream);
+
+**ov::runtime_requirements**
+
+This property returns a plugin-specific requirements string from a compiled model.
+
+.. code-block::
+
+   auto requirements = compiled_model.get_property(ov::runtime_requirements);
+
+.. note::
+
+   Particular models might not support the ``ov::runtime_requirements`` property. For example,
+   models compiled with a driver (compiler-in-driver) that does not support Level Zero
+   version 1.16, or models compiled with ``ENABLE_WEIGHTLESS=true``, which is only a
+   preview feature for now. Before reading the property, the application is recommended
+   to check whether it is present in the list of supported properties for that model.
+   Reading an unsupported property will throw.
+
+**ov::compatibility_check**
+
+This property can be queried with a requirements string to check whether
+the described model is compatible with the current runtime.
+
+.. code-block::
+
+   auto compat = core.get_property("NPU", ov::compatibility_check, {{ov::runtime_requirements.name(), requirements}});
 
 Limitations
 #############################
